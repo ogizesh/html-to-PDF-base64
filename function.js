@@ -107,7 +107,7 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
     // GENERATE PDF AND RETURN AS BASE64 STRING
     return new Promise((resolve, reject) => {
         html2pdf().set(opt).from(element).toPdf().output('datauristring').then((dataUri) => {
-            const base64String = dataUri.split(',')[1];
+            const base64String = dataUri.split(',')[1];  // Extract Base64 string
             resolve(base64String);
         }).catch(error => {
             reject(error);
