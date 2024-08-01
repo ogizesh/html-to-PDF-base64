@@ -1,12 +1,22 @@
-window.function = function (html, fileName, format, zoom, orientation, margin, breakBefore, breakAfter, breakAvoid, fidelity, customDimensions) {
-    // FIDELITY MAPPING
+window.function = function (
+    html, 
+    fileName, 
+    format, 
+    zoom, 
+    orientation, 
+    margin, 
+    breakBefore, 
+    breakAfter, 
+    breakAvoid, 
+    fidelity, 
+    customDimensions
+) {
     const fidelityMap = {
         low: 1,
         standard: 1.5,
         high: 2,
     };
 
-    // DYNAMIC VALUES
     html = html.value ?? "No HTML set.";
     fileName = fileName.value ?? "file";
     format = format.value ?? "a4";
@@ -16,10 +26,9 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
     breakBefore = breakBefore.value ? breakBefore.value.split(",") : [];
     breakAfter = breakAfter.value ? breakAfter.value.split(",") : [];
     breakAvoid = breakAvoid.value ? breakAvoid.value.split(",") : [];
-    const quality = fidelityMap[fidelity.value] ?? 1.5;
+    quality = fidelityMap[fidelity.value] ?? 1.5;
     customDimensions = customDimensions.value ? customDimensions.value.split(",").map(Number) : null;
 
-    // DOCUMENT DIMENSIONS
     const formatDimensions = {
         a0: [4967, 7022],
         a1: [3508, 4967],
@@ -64,11 +73,10 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
         credit_card: [319, 508],
     };
 
-    // GET FINAL DIMENSIONS FROM SELECTED FORMAT
     const dimensions = customDimensions || formatDimensions[format];
-    const finalDimensions = dimensions.map((dimension) => Math.round(dimension / zoom));
+    const finalDimensions = dimensions.map(dimension => Math.round(dimension / zoom));
 
-    // LOG SETTINGS TO CONSOLE
+    // Logging settings to console for debugging
     console.log(
         `Filename: ${fileName}\n` +
         `Format: ${format}\n` +
@@ -83,34 +91,30 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
         `Quality: ${quality}`
     );
 
-    // CREATE A TEMPORARY ELEMENT TO HOLD THE HTML CONTENT
-    const element = document.createElement('div');
-    element.innerHTML = html;
+    const originalHTML = `
+        <div id="content">${html}</div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+        <script>
+            (function() {
+                var element = document.getElementById('content');
+                
+                var opt = {
+                    pagebreak: { mode: ['css'], before: ${JSON.stringify(breakBefore)}, after: ${JSON.stringify(breakAfter)}, avoid: ${JSON.stringify(breakAvoid)} },
+                    margin: ${margin},
+                    filename: '${fileName}',
+                    html2canvas: { useCORS: true, scale: ${quality} },
+                    jsPDF: { unit: 'px', orientation: '${orientation}', format: [${finalDimensions}], hotfixes: ['px_scaling'] }
+                };
 
-    // OPTIONS FOR html2pdf
-    const opt = {
-        pagebreak: { mode: ['css'], before: breakBefore, after: breakAfter, avoid: breakAvoid },
-        margin: margin,
-        filename: fileName,
-        html2canvas: {
-            useCORS: true,
-            scale: quality
-        },
-        jsPDF: {
-            unit: 'px',
-            orientation: orientation,
-            format: finalDimensions,
-            hotfixes: ['px_scaling']
-        }
-    };
+                html2pdf().set(opt).from(element).output('datauristring').then(function(pdfBase64) {
+                    // Return the Base64 part of the data URI
+                    const base64PDF = pdfBase64.split(',')[1];
+                    window.parent.postMessage({ pdfBase64: base64PDF }, '*');
+                });
+            })();
+        </script>
+    `;
 
-    // GENERATE PDF AND RETURN AS BASE64 STRING
-    return new Promise((resolve, reject) => {
-        html2pdf().set(opt).from(element).toPdf().output('datauristring').then((dataUri) => {
-            const base64String = dataUri.split(',')[1];  // Extract Base64 string
-            resolve(base64String);
-        }).catch(error => {
-            reject(error);
-        });
-    });
+    var encodedHtml = encodeURIComponent(originalHTML);
+    return "data:text/html;charset=utf-8," + encodedHtml;
 };
