@@ -9,7 +9,7 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
 
         // DYNAMIC VALUES
         html = html.value ?? "No HTML set.";
-        fileName = fileName.value ?? "file.pdf";
+        fileName = fileName.value ?? "file";
         format = format.value ?? "a4";
         zoom = zoom.value ?? "1";
         orientation = orientation.value ?? "portrait";
@@ -69,56 +69,26 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
         const dimensions = customDimensions || formatDimensions[format];
         const finalDimensions = dimensions.map((dimension) => Math.round(dimension / zoom));
 
-        // LOG SETTINGS TO CONSOLE
-        console.log(
-            `Filename: ${fileName}\n` +
-            `Format: ${format}\n` +
-            `Dimensions: ${dimensions}\n` +
-            `Zoom: ${zoom}\n` +
-            `Final Dimensions: ${finalDimensions}\n` +
-            `Orientation: ${orientation}\n` +
-            `Margin: ${margin}\n` +
-            `Break before: ${breakBefore}\n` +
-            `Break after: ${breakAfter}\n` +
-            `Break avoid: ${breakAvoid}\n` +
-            `Quality: ${quality}`
-        );
-
-        // Create a container for the HTML content
-        const container = document.createElement('div');
-        container.innerHTML = html;
+        // Set the HTML content in the hidden content div
+        document.getElementById('content').innerHTML = html;
 
         // Generate the PDF and return as base64
-        html2pdf()
-            .set({
-                pagebreak: {
-                    mode: ['css'],
-                    before: breakBefore,
-                    after: breakAfter,
-                    avoid: breakAvoid,
-                },
-                margin: margin,
-                filename: fileName,
-                html2canvas: {
-                    useCORS: true,
-                    scale: quality,
-                },
-                jsPDF: {
-                    unit: 'px',
-                    orientation: orientation,
-                    format: finalDimensions,
-                    hotfixes: ['px_scaling'],
-                },
-            })
-            .from(container)
-            .toPdf()
-            .output('datauristring')
-            .then((pdfBase64) => {
-                resolve(pdfBase64.split(',')[1]);
-            })
-            .catch((error) => {
-                console.error(error);
-                reject(error);
-            });
+        html2pdf().set({
+            pagebreak: { mode: ['css'], before: breakBefore, after: breakAfter, avoid: breakAvoid },
+            margin: margin,
+            filename: fileName,
+            html2canvas: { useCORS: true, scale: quality },
+            jsPDF: { unit: 'px', orientation: orientation, format: finalDimensions, hotfixes: ['px_scaling'] }
+        })
+        .from(document.getElementById('content'))
+        .toPdf()
+        .output('datauristring')
+        .then(pdfBase64 => {
+            resolve(pdfBase64.split(',')[1]);
+        })
+        .catch(error => {
+            console.error(error);
+            reject(error);
+        });
     });
 };
