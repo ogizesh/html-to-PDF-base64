@@ -64,7 +64,7 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
 		credit_card: [319, 508],
 	};
 
-	// GET FINAL DIMESIONS FROM SELECTED FORMAT
+	// GET FINAL DIMENSIONS FROM SELECTED FORMAT
 	const dimensions = customDimensions || formatDimensions[format];
 	const finalDimensions = dimensions.map((dimension) => Math.round(dimension / zoom));
 
@@ -87,47 +87,6 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
 	body {
 	  margin: 0!important
 	}
-  
-	button#download {
-	  position: fixed;
-	  border-radius: 0.5rem;
-	  font-size: 14px;
-	  font-weight: 600;
-	  line-height: 1.5rem;
-	  color: #0d0d0d;
-	  border: none;
-	  font-family: 'Inter';
-	  padding: 0px 12px;
-	  height: 32px;
-	  background: #ffffff;
-	  top: 8px;
-	  right: 8px;
-	  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.08), 0 1px 2.5px rgba(0, 0, 0, 0.1);
-	  cursor: pointer;
-	}
-  
-	button#download:hover {
-	  background: #f5f5f5;
-	  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06), 0 6px 12px -3px rgba(0, 0, 0, 0.1);
-	}
-  
-	button#download.downloading {
-	  color: #ea580c;
-	}
-  
-	button#download.done {
-	  color: #16a34a;
-	}
-  
-	::-webkit-scrollbar {
-	  width: 5px;
-	  background-color: rgb(0 0 0 / 8%);
-	}
-  
-	::-webkit-scrollbar-thumb {
-	  background-color: rgb(0 0 0 / 32%);
-	  border-radius: 4px;
-	}
 	`;
 
 	// HTML THAT IS RETURNED AS A RENDERABLE URL
@@ -135,19 +94,12 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
 	  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
 	  <style>${customCSS}</style>
 	  <div class="main">
-	  <div class="header">
-		<button class="button" id="download">Download</button>
-	  </div>
 	  <div id="content">${html}</div>
 	  </div>
 	  <script>
-	  document.getElementById('download').addEventListener('click', function() {
-		var element = document.getElementById('content');
-		var button = this;
-		button.innerText = 'Downloading...';
-		button.className = 'downloading';
-  
-		var opt = {
+	  var element = document.getElementById('content');
+	  
+	  var opt = {
 		pagebreak: { mode: ['css'], before: ${JSON.stringify(breakBefore)}, after: ${JSON.stringify(breakAfter)}, avoid: ${JSON.stringify(breakAvoid)} },
 		margin: ${margin},
 		filename: '${fileName}',
@@ -161,18 +113,21 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
 		  format: [${finalDimensions}],
 		  hotfixes: ['px_scaling']
 		}
-		};
-		html2pdf().set(opt).from(element).toPdf().get('pdf').then(function(pdf) {
-		button.innerText = 'Done 🎉';
-		button.className = 'done';
-		setTimeout(function() { 
-		  button.innerText = 'Download';
-		  button.className = ''; 
-		}, 2000);
-		}).save();
+	  };
+	  
+	  html2pdf().set(opt).from(element).toPdf().output('datauristring').then(function(pdfBase64) {
+		const base64String = pdfBase64.split(',')[1]; // Remove the data URI scheme part
+		const blob = new Blob([base64String], { type: 'text/plain' });
+		const link = document.createElement('a');
+		link.href = URL.createObjectURL(blob);
+		link.download = '${fileName}.txt';
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
 	  });
 	  </script>
 	  `;
+
 	var encodedHtml = encodeURIComponent(originalHTML);
 	return "data:text/html;charset=utf-8," + encodedHtml;
 };
