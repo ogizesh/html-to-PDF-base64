@@ -90,7 +90,7 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
 		<button class="button" id="download">Download</button>
 	  </div>
 	  <div id="content">${html}</div>
-	  </div>`
+	  </div>`;
 
 		var element = `<div id="content">${html}</div>`;
   
