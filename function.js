@@ -10,9 +10,9 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
 	html = html.value ?? "No HTML set.";
 	fileName = fileName.value ?? "file";
 	format = format.value ?? "a4";
-	zoom = parseFloat(zoom.value ?? "1");
+	zoom = zoom.value ?? "1";
 	orientation = orientation.value ?? "portrait";
-	margin = parseFloat(margin.value ?? "0");
+	margin = margin.value ?? "0";
 	breakBefore = breakBefore.value ? breakBefore.value.split(",") : [];
 	breakAfter = breakAfter.value ? breakAfter.value.split(",") : [];
 	breakAvoid = breakAvoid.value ? breakAvoid.value.split(",") : [];
@@ -64,64 +64,54 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
 		credit_card: [319, 508],
 	};
 
-	// GET FINAL DIMENSIONS FROM SELECTED FORMAT
+	// GET FINAL DIMESIONS FROM SELECTED FORMAT
 	const dimensions = customDimensions || formatDimensions[format];
 	const finalDimensions = dimensions.map((dimension) => Math.round(dimension / zoom));
 
 	// LOG SETTINGS TO CONSOLE
 	console.log(
 		`Filename: ${fileName}\n` +
-		`Format: ${format}\n` +
-		`Dimensions: ${dimensions}\n` +
-		`Zoom: ${zoom}\n` +
-		`Final Dimensions: ${finalDimensions}\n` +
-		`Orientation: ${orientation}\n` +
-		`Margin: ${margin}\n` +
-		`Break before: ${breakBefore}\n` +
-		`Break after: ${breakAfter}\n` +
-		`Break avoid: ${breakAvoid}\n` +
-		`Quality: ${quality}`
+			`Format: ${format}\n` +
+			`Dimensions: ${dimensions}\n` +
+			`Zoom: ${zoom}\n` +
+			`Final Dimensions: ${finalDimensions}\n` +
+			`Orientation: ${orientation}\n` +
+			`Margin: ${margin}\n` +
+			`Break before: ${breakBefore}\n` +
+			`Break after: ${breakAfter}\n` +
+			`Break avoid: ${breakAvoid}\n` +
+			`Quality: ${quality}`
 	);
 
-	const customCSS = `
-		body {
-			margin: 0!important;
-		}
-	`;
-
+	// HTML
 	const originalHTML = `
-		<div id="content">${html}</div>
-	`;
+	  <div class="main">
+	  <div class="header">
+		<button class="button" id="download">Download</button>
+	  </div>
+	  <div id="content">${html}</div>
+	  </div>`
 
-	// CREATE A CONTAINER ELEMENT
-	const container = document.createElement('div');
-	container.innerHTML = originalHTML;
-	document.body.appendChild(container);
-
-	return new Promise((resolve, reject) => {
-		const opt = {
-			pagebreak: { mode: ['css'], before: breakBefore, after: breakAfter, avoid: breakAvoid },
-			margin: margin,
-			filename: fileName,
-			html2canvas: {
-				useCORS: true,
-				scale: quality,
-			},
-			jsPDF: {
-				unit: 'px',
-				orientation: orientation,
-				format: finalDimensions,
-				hotfixes: ['px_scaling'],
-			}
+		var element = `<div id="content">${html}</div>`;
+  
+		var opt = {
+		pagebreak: { mode: ['css'], before: ${JSON.stringify(breakBefore)}, after: ${JSON.stringify(breakAfter)}, avoid: ${JSON.stringify(breakAvoid)} },
+		margin: ${margin},
+		filename: '${fileName}',
+		html2canvas: {
+		  useCORS: true,
+		  scale: ${quality}
+		},
+		jsPDF: {
+		  unit: 'px',
+		  orientation: '${orientation}',
+		  format: [${finalDimensions}],
+		  hotfixes: ['px_scaling']
+		}
 		};
-
-		html2pdf().set(opt).from(container).toPdf().output('datauristring').then((pdfBase64) => {
-			const base64String = pdfBase64.split(',')[1]; // Remove the data URI scheme part
-			document.body.removeChild(container);
-			resolve({ value: base64String });
-		}).catch((err) => {
-			document.body.removeChild(container);
-			reject(err);
-		});
-	});
+		return html2pdf().set(opt).from(element).toPdf().output('datauristring')
+        .then(function(pdfBase64) {
+            const base64String = pdfBase64.split(',')[1]; // Remove the data URI scheme part
+            return base64String; // Return the base64 string
+        });
 };
