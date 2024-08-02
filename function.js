@@ -99,7 +99,7 @@ window.function = async function (html, fileName, format, zoom, orientation, mar
 	document.body.appendChild(container);
 
 	// CONVERT HTML TO PDF AND RETURN BASE64 ENCODED STRING
-	return new Promise((resolve, reject) => {
+	const pdfBase64 = await new Promise((resolve, reject) => {
 		const opt = {
 			pagebreak: { mode: ['css'], before: breakBefore, after: breakAfter, avoid: breakAvoid },
 			margin: margin,
@@ -117,12 +117,13 @@ window.function = async function (html, fileName, format, zoom, orientation, mar
 		};
 
 		html2pdf().set(opt).from(container).toPdf().output('datauristring').then((pdfBase64) => {
-			const base64String = pdfBase64.split(',')[1]; // Remove the data URI scheme part
 			document.body.removeChild(container);
-			resolve(base64String);
+			resolve(pdfBase64.split(',')[1]); // Remove the data URI scheme part
 		}).catch((err) => {
 			document.body.removeChild(container);
 			reject(err);
 		});
 	});
+
+	return pdfBase64;
 };
