@@ -112,9 +112,11 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
             })
             .from(container)
             .toPdf()
-            .output('datauristring')
-            .then((pdfBase64) => {
-                resolve(pdfBase64.split(',')[1]);
+            .get('pdf')
+            .then(function (pdf) {
+                pdf.output('datauristring').then(function (pdfBase64) {
+                    resolve(pdfBase64.split(',')[1]);
+                });
             })
             .catch((error) => {
                 console.error(error);
