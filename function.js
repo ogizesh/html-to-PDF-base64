@@ -87,6 +87,7 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
     const element = document.createElement('div');
     element.id = 'content';
     element.innerHTML = html;
+    document.body.appendChild(element); // Append to the DOM so html2pdf can access it
 
     const opt = {
         pagebreak: { mode: ['css'], before: breakBefore, after: breakAfter, avoid: breakAvoid },
@@ -107,9 +108,11 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
     let result = html2pdf().set(opt).from(element).toPdf().output('datauristring')
         .then(function(pdfBase64) {
             const base64String = pdfBase64.split(',')[1]; // Remove the data URI scheme part
+            document.body.removeChild(element); // Clean up the DOM
             return base64String; // Return the base64 string
         })
         .catch(function(error) {
+            document.body.removeChild(element); // Clean up the DOM
             console.error('Error generating PDF:', error);
             throw error; // Handle or rethrow the error as needed
         });
