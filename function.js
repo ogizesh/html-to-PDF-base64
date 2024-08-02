@@ -71,63 +71,58 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
 	// LOG SETTINGS TO CONSOLE
 	console.log(
 		`Filename: ${fileName}\n` +
-			`Format: ${format}\n` +
-			`Dimensions: ${dimensions}\n` +
-			`Zoom: ${zoom}\n` +
-			`Final Dimensions: ${finalDimensions}\n` +
-			`Orientation: ${orientation}\n` +
-			`Margin: ${margin}\n` +
-			`Break before: ${breakBefore}\n` +
-			`Break after: ${breakAfter}\n` +
-			`Break avoid: ${breakAvoid}\n` +
-			`Quality: ${quality}`
+		`Format: ${format}\n` +
+		`Dimensions: ${dimensions}\n` +
+		`Zoom: ${zoom}\n` +
+		`Final Dimensions: ${finalDimensions}\n` +
+		`Orientation: ${orientation}\n` +
+		`Margin: ${margin}\n` +
+		`Break before: ${breakBefore}\n` +
+		`Break after: ${breakAfter}\n` +
+		`Break avoid: ${breakAvoid}\n` +
+		`Quality: ${quality}`
 	);
 
 	const customCSS = `
-	body {
-	  margin: 0!important
-	}
+		body {
+			margin: 0!important;
+		}
 	`;
 
-	// HTML THAT IS RETURNED AS A RENDERABLE URL
 	const originalHTML = `
-	  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
-	  <style>${customCSS}</style>
-	  <div class="main">
-	  <div id="content">${html}</div>
-	  </div>
-	  <script>
-	  var element = document.getElementById('content');
-	  
-	  var opt = {
-		pagebreak: { mode: ['css'], before: ${JSON.stringify(breakBefore)}, after: ${JSON.stringify(breakAfter)}, avoid: ${JSON.stringify(breakAvoid)} },
-		margin: ${margin},
-		filename: '${fileName}',
-		html2canvas: {
-		  useCORS: true,
-		  scale: ${quality}
-		},
-		jsPDF: {
-		  unit: 'px',
-		  orientation: '${orientation}',
-		  format: [${finalDimensions}],
-		  hotfixes: ['px_scaling']
-		}
-	  };
-	  
-	  html2pdf().set(opt).from(element).toPdf().output('datauristring').then(function(pdfBase64) {
-		const base64String = pdfBase64.split(',')[1]; // Remove the data URI scheme part
-		const blob = new Blob([base64String], { type: 'text/plain' });
-		const link = document.createElement('a');
-		link.href = URL.createObjectURL(blob);
-		link.download = '${fileName}.txt';
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
-	  });
-	  </script>
-	  `;
+		<div id="content">${html}</div>
+	`;
 
-	var encodedHtml = encodeURIComponent(originalHTML);
-	return "data:text/html;charset=utf-8," + encodedHtml;
+	// CREATE A CONTAINER ELEMENT
+	const container = document.createElement('div');
+	container.innerHTML = originalHTML;
+	document.body.appendChild(container);
+
+	// CONVERT HTML TO PDF AND RETURN BASE64 ENCODED STRING
+	return new Promise((resolve, reject) => {
+		const opt = {
+			pagebreak: { mode: ['css'], before: breakBefore, after: breakAfter, avoid: breakAvoid },
+			margin: margin,
+			filename: fileName,
+			html2canvas: {
+				useCORS: true,
+				scale: quality,
+			},
+			jsPDF: {
+				unit: 'px',
+				orientation: orientation,
+				format: finalDimensions,
+				hotfixes: ['px_scaling'],
+			}
+		};
+
+		html2pdf().set(opt).from(container).toPdf().output('datauristring').then((pdfBase64) => {
+			const base64String = pdfBase64.split(',')[1]; // Remove the data URI scheme part
+			document.body.removeChild(container);
+			resolve({ value: base64String });
+		}).catch((err) => {
+			document.body.removeChild(container);
+			reject(err);
+		});
+	});
 };
