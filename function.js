@@ -98,31 +98,32 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
 			</div>
 			<script>
 				function generatePDF() {
-					return new Promise((resolve, reject) => {
-						var element = document.getElementById('content');
-						var opt = {
-							pagebreak: { mode: ['css'], before: ${JSON.stringify(breakBefore)}, after: ${JSON.stringify(breakAfter)}, avoid: ${JSON.stringify(breakAvoid)} },
-							margin: ${margin},
-							filename: '${fileName}',
-							html2canvas: {
-								useCORS: true,
-								scale: ${quality}
-							},
-							jsPDF: {
-								unit: 'px',
-								orientation: '${orientation}',
-								format: [${finalDimensions}],
-								hotfixes: ['px_scaling']
-							}
+					var element = document.getElementById('content');
+					var opt = {
+						pagebreak: { mode: ['css'], before: ${JSON.stringify(breakBefore)}, after: ${JSON.stringify(breakAfter)}, avoid: ${JSON.stringify(breakAvoid)} },
+						margin: ${margin},
+						filename: '${fileName}',
+						html2canvas: {
+							useCORS: true,
+							scale: ${quality}
+						},
+						jsPDF: {
+							unit: 'px',
+							orientation: '${orientation}',
+							format: [${finalDimensions}],
+							hotfixes: ['px_scaling']
+						}
+					};
+					html2pdf().set(opt).from(element).toPdf().get('pdf').then(function(pdf) {
+						var reader = new FileReader();
+						reader.onload = function() {
+							var base64String = reader.result.split(',')[1];
+							window.parent.postMessage({ type: 'pdfGenerated', data: base64String }, '*');
 						};
-						html2pdf().set(opt).from(element).toPdf().output('datauristring').then(function(pdfBase64) {
-							resolve(pdfBase64.split(',')[1]);
-						}).catch(reject);
-					});
+						reader.readAsDataURL(pdf.output('blob'));
+					}).catch(console.error);
 				}
-				generatePDF().then(function(base64) {
-					window.parent.postMessage({ type: 'pdfGenerated', data: base64 }, '*');
-				}).catch(console.error);
+				generatePDF();
 			</script>
 		`;
 
