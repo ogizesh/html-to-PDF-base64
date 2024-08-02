@@ -1,4 +1,4 @@
-window.function = async function (html, fileName, format, zoom, orientation, margin, breakBefore, breakAfter, breakAvoid, fidelity, customDimensions) {
+window.function = function (html, fileName, format, zoom, orientation, margin, breakBefore, breakAfter, breakAvoid, fidelity, customDimensions) {
 	// FIDELITY MAPPING
 	const fidelityMap = {
 		low: 1,
@@ -98,8 +98,7 @@ window.function = async function (html, fileName, format, zoom, orientation, mar
 	container.innerHTML = originalHTML;
 	document.body.appendChild(container);
 
-	// CONVERT HTML TO PDF AND RETURN BASE64 ENCODED STRING
-	const pdfBase64 = await new Promise((resolve, reject) => {
+	return new Promise((resolve, reject) => {
 		const opt = {
 			pagebreak: { mode: ['css'], before: breakBefore, after: breakAfter, avoid: breakAvoid },
 			margin: margin,
@@ -117,13 +116,12 @@ window.function = async function (html, fileName, format, zoom, orientation, mar
 		};
 
 		html2pdf().set(opt).from(container).toPdf().output('datauristring').then((pdfBase64) => {
+			const base64String = pdfBase64.split(',')[1]; // Remove the data URI scheme part
 			document.body.removeChild(container);
-			resolve(pdfBase64.split(',')[1]); // Remove the data URI scheme part
+			resolve({ value: base64String });
 		}).catch((err) => {
 			document.body.removeChild(container);
 			reject(err);
 		});
 	});
-
-	return pdfBase64;
 };
