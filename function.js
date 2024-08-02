@@ -1,22 +1,16 @@
-window.function = function (
-    html, 
-    fileName, 
-    format, 
-    zoom, 
-    orientation, 
-    margin, 
-    breakBefore, 
-    breakAfter, 
-    breakAvoid, 
-    fidelity, 
-    customDimensions
-) {
+window.function = async function (html, fileName, format, zoom, orientation, margin, breakBefore, breakAfter, breakAvoid, fidelity, customDimensions) {
+    // Import necessary modules
+    const puppeteer = require('puppeteer');
+    const fs = require('fs');
+    
+    // FIDELITY MAPPING
     const fidelityMap = {
         low: 1,
         standard: 1.5,
         high: 2,
     };
 
+    // DYNAMIC VALUES
     html = html.value ?? "No HTML set.";
     fileName = fileName.value ?? "file";
     format = format.value ?? "a4";
@@ -29,6 +23,7 @@ window.function = function (
     quality = fidelityMap[fidelity.value] ?? 1.5;
     customDimensions = customDimensions.value ? customDimensions.value.split(",").map(Number) : null;
 
+    // DOCUMENT DIMENSIONS
     const formatDimensions = {
         a0: [4967, 7022],
         a1: [3508, 4967],
@@ -73,10 +68,11 @@ window.function = function (
         credit_card: [319, 508],
     };
 
+    // GET FINAL DIMESIONS FROM SELECTED FORMAT
     const dimensions = customDimensions || formatDimensions[format];
-    const finalDimensions = dimensions.map(dimension => Math.round(dimension / zoom));
+    const finalDimensions = dimensions.map((dimension) => Math.round(dimension / zoom));
 
-    // Logging settings to console for debugging
+    // LOG SETTINGS TO CONSOLE
     console.log(
         `Filename: ${fileName}\n` +
         `Format: ${format}\n` +
@@ -91,30 +87,30 @@ window.function = function (
         `Quality: ${quality}`
     );
 
-    const originalHTML = `
-        <div id="content">${html}</div>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
-        <script>
-            (function() {
-                var element = document.getElementById('content');
-                
-                var opt = {
-                    pagebreak: { mode: ['css'], before: ${JSON.stringify(breakBefore)}, after: ${JSON.stringify(breakAfter)}, avoid: ${JSON.stringify(breakAvoid)} },
-                    margin: ${margin},
-                    filename: '${fileName}',
-                    html2canvas: { useCORS: true, scale: ${quality} },
-                    jsPDF: { unit: 'px', orientation: '${orientation}', format: [${finalDimensions}], hotfixes: ['px_scaling'] }
-                };
+    // Use Puppeteer to generate the PDF
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
 
-                html2pdf().set(opt).from(element).output('datauristring').then(function(pdfBase64) {
-                    // Return the Base64 part of the data URI
-                    const base64PDF = pdfBase64.split(',')[1];
-                    window.parent.postMessage({ pdfBase64: base64PDF }, '*');
-                });
-            })();
-        </script>
-    `;
+    await page.setContent(html);
+    const pdfBuffer = await page.pdf({
+        format: format,
+        landscape: orientation === 'landscape',
+        margin: {
+            top: margin,
+            right: margin,
+            bottom: margin,
+            left: margin
+        },
+        width: finalDimensions[0] + 'px',
+        height: finalDimensions[1] + 'px',
+        printBackground: true,
+        scale: quality
+    });
 
-    var encodedHtml = encodeURIComponent(originalHTML);
-    return "data:text/html;charset=utf-8," + encodedHtml;
+    await browser.close();
+
+    // Convert PDF buffer to base64
+    const pdfBase64 = pdfBuffer.toString('base64');
+    
+    return pdfBase64;
 };
