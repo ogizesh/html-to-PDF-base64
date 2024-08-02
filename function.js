@@ -1,4 +1,4 @@
-window.function = function (html, fileName, format, zoom, orientation, margin, breakBefore, breakAfter, breakAvoid, fidelity, customDimensions) {
+window.generatePdf = function (html, fileName, format, zoom, orientation, margin, breakBefore, breakAfter, breakAvoid, fidelity, customDimensions) {
 	// FIDELITY MAPPING
 	const fidelityMap = {
 		low: 1,
@@ -92,26 +92,36 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
 	  <div id="content">${html}</div>
 	  </div>`;
 
-		var element = `<div id="content">${html}</div>`;
-  
-		var opt = {
-		pagebreak: { mode: ['css'], before: ${JSON.stringify(breakBefore)}, after: ${JSON.stringify(breakAfter)}, avoid: ${JSON.stringify(breakAvoid)} },
-		margin: ${margin},
-		filename: '${fileName}',
+	var element = `<div id="content">${html}</div>`;
+
+	var opt = {
+		pagebreak: { mode: ['css'], before: breakBefore, after: breakAfter, avoid: breakAvoid },
+		margin: margin,
+		filename: fileName,
 		html2canvas: {
-		  useCORS: true,
-		  scale: ${quality}
+			useCORS: true,
+			scale: quality
 		},
 		jsPDF: {
-		  unit: 'px',
-		  orientation: '${orientation}',
-		  format: [${finalDimensions}],
-		  hotfixes: ['px_scaling']
+			unit: 'px',
+			orientation: orientation,
+			format: finalDimensions,
+			hotfixes: ['px_scaling']
 		}
-		};
-		return html2pdf().set(opt).from(element).toPdf().output('datauristring')
-        .then(function(pdfBase64) {
-            const base64String = pdfBase64.split(',')[1]; // Remove the data URI scheme part
-            return base64String; // Return the base64 string
-        });
+	};
+
+	return html2pdf().set(opt).from(element).toPdf().output('datauristring')
+		.then(function(pdfBase64) {
+			const base64String = pdfBase64.split(',')[1]; // Remove the data URI scheme part
+			return base64String; // Return the base64 string
+		});
 };
+
+// Example of calling the function
+window.generatePdf(html, fileName, format, zoom, orientation, margin, breakBefore, breakAfter, breakAvoid, fidelity, customDimensions)
+	.then(function(base64String) {
+		console.log(base64String); // Do something with the base64 string
+	})
+	.catch(function(error) {
+		console.error('Error generating PDF:', error);
+	});
