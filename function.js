@@ -84,42 +84,55 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
             `Quality: ${quality}`
         );
 
-        // Create a container for the HTML content
-        const container = document.createElement('div');
-        container.innerHTML = html;
+        const customCSS = `
+        body {
+            margin: 0!important
+        }
+        `;
 
-        // Generate the PDF and return as base64
-        html2pdf()
-            .set({
-                pagebreak: {
-                    mode: ['css'],
-                    before: breakBefore,
-                    after: breakAfter,
-                    avoid: breakAvoid,
-                },
-                margin: margin,
-                filename: fileName,
-                html2canvas: {
-                    useCORS: true,
-                    scale: quality,
-                },
-                jsPDF: {
-                    unit: 'px',
-                    orientation: orientation,
-                    format: finalDimensions,
-                    hotfixes: ['px_scaling'],
-                },
-            })
-            .from(container)
-            .toPdf()
-            .output('datauristring')
-            .then((pdfBase64) => {
-                const base64String = pdfBase64.split(',')[1];
-                resolve(base64String);
-            })
-            .catch((error) => {
-                console.error(error);
-                reject(error);
-            });
+        const originalHTML = `
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+            <style>${customCSS}</style>
+            <div class="main">
+                <div id="content">${html}</div>
+            </div>
+            <script>
+                function generatePDF() {
+                    var element = document.getElementById('content');
+                    var opt = {
+                        pagebreak: { mode: ['css'], before: ${JSON.stringify(breakBefore)}, after: ${JSON.stringify(breakAfter)}, avoid: ${JSON.stringify(breakAvoid)} },
+                        margin: ${margin},
+                        filename: '${fileName}',
+                        html2canvas: {
+                            useCORS: true,
+                            scale: ${quality}
+                        },
+                        jsPDF: {
+                            unit: 'px',
+                            orientation: '${orientation}',
+                            format: [${finalDimensions}],
+                            hotfixes: ['px_scaling']
+                        }
+                    };
+                    html2pdf().set(opt).from(element).toPdf().output('datauristring').then(function(pdfBase64) {
+                        window.parent.postMessage({ type: 'pdfGenerated', data: pdfBase64.split(',')[1] }, '*');
+                    });
+                }
+                generatePDF();
+            </script>
+        `;
+
+        var iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(originalHTML);
+        document.body.appendChild(iframe);
+
+        window.addEventListener('message', function handler(event) {
+            if (event.data.type === 'pdfGenerated') {
+                window.removeEventListener('message', handler);
+                iframe.remove();
+                resolve(event.data.data);
+            }
+        });
     });
 };
