@@ -66,26 +66,16 @@ window.function = async function (html, fileName, format, zoom, orientation, mar
 
     // GET FINAL DIMENSIONS FROM SELECTED FORMAT
     const dimensions = customDimensions || formatDimensions[format];
-    const finalDimensions = dimensions.map((dimension) => Math.round(dimension / zoom));
+    const finalDimensions = dimensions.map(dimension => Math.round(dimension / zoom));
 
-    // LOG SETTINGS TO CONSOLE
-    console.log(
-        `Filename: ${fileName}\n` +
-        `Format: ${format}\n` +
-        `Dimensions: ${dimensions}\n` +
-        `Zoom: ${zoom}\n` +
-        `Final Dimensions: ${finalDimensions}\n` +
-        `Orientation: ${orientation}\n` +
-        `Margin: ${margin}\n` +
-        `Break before: ${breakBefore}\n` +
-        `Break after: ${breakAfter}\n` +
-        `Break avoid: ${breakAvoid}\n` +
-        `Quality: ${quality}`
-    );
+    // Set the HTML content in the hidden content div
+    const contentDiv = document.getElementById('content');
+    contentDiv.innerHTML = html;
+    contentDiv.style.display = 'block';
 
-    // Create a container for the HTML content
-    const container = document.getElementById('content');
-    container.innerHTML = html;
+    // Show the status
+    const statusDiv = document.getElementById('status');
+    statusDiv.style.display = 'block';
 
     // Generate the PDF and return as base64
     try {
@@ -108,11 +98,16 @@ window.function = async function (html, fileName, format, zoom, orientation, mar
                 format: finalDimensions,
                 hotfixes: ['px_scaling'],
             },
-        }).from(container).toPdf().output('datauristring');
+        }).from(contentDiv).toPdf().output('datauristring');
+
+        // Hide the content and status div after generating the PDF
+        contentDiv.style.display = 'none';
+        statusDiv.style.display = 'none';
 
         return pdfBase64.split(',')[1];
     } catch (error) {
         console.error(error);
+        statusDiv.innerText = 'Error generating PDF';
         throw error;
     }
 };
