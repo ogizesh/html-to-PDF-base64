@@ -1,4 +1,4 @@
-window.generatePdf = function (html, fileName, format, zoom, orientation, margin, breakBefore, breakAfter, breakAvoid, fidelity, customDimensions) {
+window.function = function (html, fileName, format, zoom, orientation, margin, breakBefore, breakAfter, breakAvoid, fidelity, customDimensions) {
 	// FIDELITY MAPPING
 	const fidelityMap = {
 		low: 1,
@@ -83,15 +83,6 @@ window.generatePdf = function (html, fileName, format, zoom, orientation, margin
 			`Quality: ${quality}`
 	);
 
-	// HTML
-	const originalHTML = `
-	  <div class="main">
-	  <div class="header">
-		<button class="button" id="download">Download</button>
-	  </div>
-	  <div id="content">${html}</div>
-	  </div>`;
-
 	var element = `<div id="content">${html}</div>`;
 
 	var opt = {
@@ -116,12 +107,3 @@ window.generatePdf = function (html, fileName, format, zoom, orientation, margin
 			return base64String; // Return the base64 string
 		});
 };
-
-// Example of calling the function
-window.generatePdf(html, fileName, format, zoom, orientation, margin, breakBefore, breakAfter, breakAvoid, fidelity, customDimensions)
-	.then(function(base64String) {
-		console.log(base64String); // Do something with the base64 string
-	})
-	.catch(function(error) {
-		console.error('Error generating PDF:', error);
-	});
