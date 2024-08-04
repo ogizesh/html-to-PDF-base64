@@ -1,3 +1,4 @@
+window.onload = function() {
 window.function = function (html, fileName, format, zoom, orientation, margin, breakBefore, breakAfter, breakAvoid, fidelity, customDimensions) {
     // FIDELITY MAPPING
     const fidelityMap = {
@@ -118,4 +119,5 @@ window.function = function (html, fileName, format, zoom, orientation, margin, b
         });
 
     return result;
+};
 };
