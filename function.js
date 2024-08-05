@@ -65,19 +65,25 @@ window.function = async function (html, fileName, format, zoom, orientation, mar
     		credit_card: [319, 508]
         };
 
-        // Log for debugging
-        let logDetails = `Received format: ${format}\nCustom Dimensions: ${customDimensions}\n`;
-
-        // Get Final Dimensions from Selected Format
         let dimensions = customDimensions || formatDimensions[format];
 
         if (!dimensions) {
-            logDetails += "Error: Format not found in formatDimensions and no valid customDimensions provided.\n";
             throw new Error("Invalid format or custom dimensions provided.");
         }
 
         const finalDimensions = dimensions.map(dimension => Math.round(dimension / zoom));
-        logDetails += `Calculated Dimensions: ${finalDimensions}\nZoom: ${zoom}\n`;
+
+        // Create an iframe to isolate the context
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none'; // Hide the iframe
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        doc.close();
+
+        const element = doc.body;  // Use the iframe's body for the PDF content
 
         // PDF Options
         const opt = {
@@ -97,8 +103,11 @@ window.function = async function (html, fileName, format, zoom, orientation, mar
         };
 
         // Generate PDF
-        const pdfBase64 = await html2pdf().set(opt).from(html).toPdf().output('datauristring');
+        const pdfBase64 = await html2pdf().set(opt).from(element).toPdf().output('datauristring');
         const base64String = pdfBase64.split(',')[1];
+
+        // Clean up iframe
+        document.body.removeChild(iframe);
 
         return JSON.stringify({
             success: true,
