@@ -24,20 +24,26 @@ window.function = async function (html, fileName, format, zoom, orientation, mar
         const formatDimensions = {
             a0: [4967, 7022],
             a1: [3508, 4967],
-            // Add other formats here...
+            a2: [2480, 3508],
+            a3: [1754, 2480],
             a4: [1240, 1754],
             letter: [1276, 1648],
+            // Add other formats as needed...
         };
+
+        // Log for debugging
+        let logDetails = `Received format: ${format}\nCustom Dimensions: ${customDimensions}\n`;
 
         // Get Final Dimensions from Selected Format
         let dimensions = customDimensions || formatDimensions[format];
-        
-        // Check if dimensions are valid
+
         if (!dimensions) {
+            logDetails += "Error: Format not found in formatDimensions and no valid customDimensions provided.\n";
             throw new Error("Invalid format or custom dimensions provided.");
         }
 
         const finalDimensions = dimensions.map(dimension => Math.round(dimension / zoom));
+        logDetails += `Calculated Dimensions: ${finalDimensions}\nZoom: ${zoom}\n`;
 
         // PDF Options
         const opt = {
