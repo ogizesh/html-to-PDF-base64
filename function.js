@@ -30,7 +30,13 @@ window.function = async function (html, fileName, format, zoom, orientation, mar
         };
 
         // Get Final Dimensions from Selected Format
-        const dimensions = customDimensions || formatDimensions[format];
+        let dimensions = customDimensions || formatDimensions[format];
+        
+        // Check if dimensions are valid
+        if (!dimensions) {
+            throw new Error("Invalid format or custom dimensions provided.");
+        }
+
         const finalDimensions = dimensions.map(dimension => Math.round(dimension / zoom));
 
         // PDF Options
